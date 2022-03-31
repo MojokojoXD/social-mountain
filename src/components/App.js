@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-
+import axios from 'axios';
+import Post from './Post/Post'
 import './App.css';
-
 import Header from './Header/Header';
 import Compose from './Compose/Compose';
 
@@ -19,19 +19,47 @@ class App extends Component {
   }
   
   componentDidMount() {
-
+    async function post(){
+      try{
+        const {data} = await axios.get('https://practiceapi.devmountain.com/api/posts');
+        return data;
+      }catch(err){
+        console.log(err)
+      }
+    }
+    Promise.resolve(post()).then(resolve => this.setState({posts: resolve}));
   }
 
-  updatePost() {
+  async updatePost(post) {
+    try{
+        const {data} = await axios.put(`https://practiceapi.devmountain.com/api/posts?id=${post.id}`,{text: post.text})
+        
+        this.setState(state => ({posts: [...state,...data]}));
+    }catch(error){
+      console.log(error);
+    }
+  }
+
+  async deletePost(id) {
+    try{
+      const {data} = await axios.delete(`${baseURL}?id=${id}`);
   
+      this.setState(state=> ({posts: [...state,...data]}));
+    }catch(err){
+      console.log(err);
+    }
   }
 
-  deletePost() {
+  async createPost(text) {
+    try{
+      const {data} = await axios.post(`${baseURL}`,{text : text})
 
-  }
-
-  createPost() {
-
+      this.setState(state=>{
+        return {posts: [...data]}
+      })
+    }catch(error){
+      console.log(error);
+    }
   }
 
   render() {
@@ -43,8 +71,8 @@ class App extends Component {
 
         <section className="App__content">
 
-          <Compose />
-          
+          <Compose createPostFn={this.createPost}/>
+          {posts.map(post => <Post key={post.id} text={post.text} date={post.date} updatePostFn={this.updatePost} id={post.id} deletePostFn={this.deletePost} />)}
         </section>
       </div>
     );
@@ -52,3 +80,6 @@ class App extends Component {
 }
 
 export default App;
+
+
+const baseURL = "https://practiceapi.devmountain.com/api/posts";
